@@ -285,6 +285,16 @@ if (form) {
     formBtn.innerHTML = '<ion-icon name="hourglass-outline"></ion-icon><span>Sending...</span>';
     formBtn.setAttribute("disabled", "");
 
+    // Show initial loading message for potential cold start
+    const isProduction = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
+    if (isProduction) {
+      setTimeout(() => {
+        if (formBtn.innerHTML.includes('Sending...')) {
+          formBtn.innerHTML = '<ion-icon name="time-outline"></ion-icon><span>Starting server...</span>';
+        }
+      }, 5000); // Show "starting server" message after 5 seconds
+    }
+
     try {
       // Determine API URL based on environment
       const getApiUrl = () => {
@@ -296,19 +306,26 @@ if (form) {
         }
 
         // For production, use your Render backend URL
+        // Note: Render free tier may take 30+ seconds to wake up from sleep
         return "https://tejana-backend.onrender.com/api/contact";
       };
 
       const apiUrl = getApiUrl();
-      console.log('Sending contact form to:', apiUrl);
+
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       // Check if response is ok
       if (!response.ok) {
@@ -343,7 +360,9 @@ if (form) {
       console.error("Error:", error);
 
       // Handle different types of errors
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      if (error.name === 'AbortError') {
+        showFormMessage("Request timed out. The server may be starting up (this can take 30+ seconds on first request). Please try again.", "error");
+      } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
         showFormMessage("Network error. Please check your internet connection and try again.", "error");
       } else if (error.name === 'SyntaxError') {
         showFormMessage("Server response error. Please try again later.", "error");
