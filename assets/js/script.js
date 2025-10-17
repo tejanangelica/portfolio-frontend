@@ -285,14 +285,14 @@ if (form) {
     formBtn.innerHTML = '<ion-icon name="hourglass-outline"></ion-icon><span>Sending...</span>';
     formBtn.setAttribute("disabled", "");
 
-    // Show initial loading message for potential cold start
+    // Show toast notification for potential cold start delay
     const isProduction = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
     if (isProduction) {
       setTimeout(() => {
         if (formBtn.innerHTML.includes('Sending...')) {
-          formBtn.innerHTML = '<ion-icon name="time-outline"></ion-icon><span>Starting server...</span>';
+          showFormMessage("Server is starting up, this may take up to 30 seconds on first request...", "info");
         }
-      }, 5000); // Show "starting server" message after 5 seconds
+      }, 8000); // Show info message after 8 seconds if still loading
     }
 
     try {
@@ -314,18 +314,28 @@ if (form) {
 
       // Create AbortController for timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 30000); // 30 second timeout
 
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-        signal: controller.signal
-      });
+      let response;
+      try {
+        response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+          signal: controller.signal
+        });
 
-      clearTimeout(timeoutId);
+        // Clear timeout on successful fetch
+        clearTimeout(timeoutId);
+      } catch (fetchError) {
+        // Clear timeout on fetch error
+        clearTimeout(timeoutId);
+        throw fetchError;
+      }
 
       // Check if response is ok
       if (!response.ok) {
@@ -399,9 +409,17 @@ function showToast(title, message, type = 'success') {
   toast.className = `toast toast-${type}`;
 
   // Create toast content
+  const getIcon = () => {
+    switch(type) {
+      case 'success': return 'checkmark';
+      case 'info': return 'information-circle';
+      default: return 'close';
+    }
+  };
+
   toast.innerHTML = `
     <div class="toast-icon">
-      <ion-icon name="${type === 'success' ? 'checkmark' : 'close'}"></ion-icon>
+      <ion-icon name="${getIcon()}"></ion-icon>
     </div>
     <div class="toast-content">
       <div class="toast-title">${title}</div>
@@ -433,7 +451,17 @@ function showToast(title, message, type = 'success') {
 
 // Updated function for form messages (now uses toast)
 function showFormMessage(message, type) {
-  const title = type === 'success' ? 'Message Sent!' : 'Error';
+  let title;
+  switch(type) {
+    case 'success':
+      title = 'Message Sent!';
+      break;
+    case 'info':
+      title = 'Please Wait';
+      break;
+    default:
+      title = 'Error';
+  }
   showToast(title, message, type);
 }
 
