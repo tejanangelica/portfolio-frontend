@@ -286,10 +286,22 @@ if (form) {
     formBtn.setAttribute("disabled", "");
 
     try {
-      // Use Render backend for production, localhost for development
-      const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? "http://localhost:3000/api/contact"
-        : "https://portfolio-backend-REPLACE_WITH_YOUR_RENDER_URL.onrender.com/api/contact";
+      // Determine API URL based on environment
+      const getApiUrl = () => {
+        // Check if we're in local development
+        if (window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1' ||
+            window.location.hostname === '') {
+          return "http://localhost:3000/api/contact";
+        }
+
+        // For production, use your Render backend URL
+        // Update this URL after deploying to Render
+        return "https://portfolio-backend-angelica.onrender.com/api/contact";
+      };
+
+      const apiUrl = getApiUrl();
+      console.log('Sending contact form to:', apiUrl);
 
       const response = await fetch(apiUrl, {
         method: "POST",

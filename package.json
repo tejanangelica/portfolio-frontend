@@ -4,8 +4,10 @@
   "description": "Angelica Tejana's creative portfolio - frontend static website",
   "scripts": {
     "dev": "echo 'Open index.html in your browser or use Live Server extension'",
-    "build": "echo 'Static site - no build required'",
-    "preview": "echo 'Use Live Server extension in VS Code or open index.html directly'"
+    "build": "echo 'Static site ready for deployment'",
+    "preview": "echo 'Use Live Server extension in VS Code or open index.html directly'",
+    "vercel-build": "echo 'Static site ready for deployment'",
+    "start": "echo 'Static site - serve index.html'"
   },
   "keywords": [
     "portfolio",
