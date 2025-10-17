@@ -296,8 +296,7 @@ if (form) {
         }
 
         // For production, use your Render backend URL
-        // Update this URL after deploying to Render
-        return "https://portfolio-backend-angelica.onrender.com/api/contact";
+        return "https://tejana-backend.onrender.com/api/contact";
       };
 
       const apiUrl = getApiUrl();
